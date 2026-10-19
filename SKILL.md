@@ -148,6 +148,24 @@ license: GPL-2.0
   2. 运行环境初始化（`scripts/setup.py` 建 `.venv`、装依赖、写 `skill_env.json`）——
      这只动 `.venv/` 与 `skill_env.json`，不碰 `src/cwf/**`。
 
+## 结果怎么判断是否正确
+
+每次 `run` 的 `--json` 直接给 `status` / `artifacts` / `error` / `node_errors`；
+`log <run_id>` 有完整记录（含这次真正发出去的 `submitted_prompt`、参数来源
+`param_sources`、产物路径）。**判定规则**：
+
+| 迹象 | 结论 |
+|---|---|
+| `status=success` 且 `artifacts` 非空、文件存在 | **成功**——产物路径直接 present |
+| `status=failed` | **失败**——`error` + `node_errors`（哪个节点、什么错）如实汇报 |
+| `status=timeout` | **超时**——`error` 说明等了多久 |
+| `status=success` 但 `artifacts` 为空 | **疑似空跑**——ComfyUI 也会对"没执行的图"回 success；检查 SaveImage 是否被旁路、节点是否真的跑（`execution_cached` 全节点 = 完全缓存没干活） |
+| 参数被 `--set` 改坏 / 模型名不存在 | 提交阶段多数会 400 + `node_errors`（`value_not_in_list` 等），`run --json` 直接给出；执行期失败走 `status=failed` |
+
+- **产物落地核对**：`artifacts[].local_path` 存在、非空、PNG 能读宽高。把产物用
+  present/图片语法给用户看，是"结果正确"最直接的证据。
+- 判定辅助代码见 `src/cwf/judge.py`（`judge_run_result` / `check_artifact`）。
+
 ## 变更与记录
 
 - 源文件变了（`sync` 标 `stale` / 列表带 `!`）→ 提醒用户，经确认再
