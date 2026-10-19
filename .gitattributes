@@ -1,0 +1,6 @@
+# 随 skill 分发的文件（供 git 使用）
+SKILL.md
+scripts/
+src/
+references/
+.gitignore

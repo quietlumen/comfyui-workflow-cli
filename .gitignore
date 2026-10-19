@@ -1,0 +1,7 @@
+# cwf skill 自带运行时目录（setup.py 生成，不必随 skill 分发）
+.venv/
+__pycache__/
+*.py[cod]
+
+# skill 本机配置（含本机工作区路径，不随 skill 走）
+skill_env.json
