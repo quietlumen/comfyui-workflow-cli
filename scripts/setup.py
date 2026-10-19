@@ -3,21 +3,22 @@
 """cwf skill 一次性配置：建 .venv、离线装依赖、初始化工作区。
 
 用法：
-    python setup.py [--workspace D:\\xxx] [--instance-dir D:\\ComfyUI\\ComfyUI]
+    python setup.py --workspace D:\\xxx [--instance-dir D:\\ComfyUI\\ComfyUI]
                     [--host H] [--port P] [--base-python X]
 
 做的事情（幂等，可重复跑）：
   1. 在 skill 目录建 `.venv`（用 base python；缺省优先捆绑 Python 3.12，其次系统 python）；
-  2. 用 vendor/wheels 离线安装 cwf 依赖（typer/rich/httpx/pydantic）——不联网；
+  2. 用 pip 在线安装 cwf 依赖（typer/rich/httpx/pydantic/playwright）；
   3. 把".venv 里的 python" 记录成命令入口，供 scripts/cwf_cli.py 调用；
-  4. 在指定工作区目录跑 `cwf init`（默认 <workspace>，缺省 D:\\comfyui_workflow\\data）。
+  4. 在指定工作区目录跑 `cwf init`（**--workspace 必填**，由用户提供）。
      init 只写 config.json（instance 目录/host/port），不会扫任何东西。
 
 每次跑都会把 3/4 两步的"当前配置"写进 skill 根目录的 `skill_env.json`，
 scripts/cwf_cli.py 每次调用都会读它——这就是"skill 内命令配置"。
 
 关于"日志、运行记录放哪"：cwf 的所有产物（运行记录、产物、队列、日志）都在
-工作区目录里，init 时通过 --workspace 指定。skill 本身只放源码与 .venv。
+工作区目录里，init 时通过 --workspace 指定（用户给哪个就用哪个）。
+skill 本身只放源码与 .venv。
 """
 from __future__ import annotations
 
@@ -38,8 +39,6 @@ ENV_FILE = SKILL_DIR / "skill_env.json"
 BUNDLED_PY = Path(
     r"C:\Users\Administrator\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python"
 ) / "python.exe"
-
-DEFAULT_WORKSPACE = Path(r"D:\comfyui_workflow\data")
 
 
 def _base_python(chosen: str | None) -> str | None:
@@ -145,7 +144,8 @@ def configure_browser(workspace: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="cwf skill 配置（幂等）")
-    ap.add_argument("--workspace", default=str(DEFAULT_WORKSPACE), help="工作区目录（产物/记录/日志都在这）")
+    ap.add_argument("--workspace", required=True,
+                    help="工作区目录（必填；产物/运行记录/日志/队列/台账都放这里）")
     ap.add_argument("--instance-dir", default=None, help="ComfyUI 安装目录")
     ap.add_argument("--host", default=None)
     ap.add_argument("--port", type=int, default=None)

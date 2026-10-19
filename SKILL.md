@@ -16,16 +16,16 @@ license: GPL-2.0
 在 skill 目录跑配置脚本——它会在 skill 里建 `.venv`、**在线安装依赖**，并初始化工作区：
 
 ```
-<python> "<skill_dir>/scripts/setup.py" --workspace D:\xxx [--instance-dir D:\ComfyUI\ComfyUI] [--host H --port P]
+<python> "<skill_dir>/scripts/setup.py" --workspace D:\xxx --instance-dir D:\ComfyUI\ComfyUI [--host H --port P]
 ```
 
-- **`--workspace`**：工作区目录。**日志、运行记录、产物、队列、台账全放这里**
-  （skill 本身只放源码和 `.venv`）。缺省 `D:\comfyui_workflow\data`。
+- **`--workspace`（必填）**：由**用户提供**的工作区目录。**日志、运行记录、产物、
+  队列、台账全放这里**（skill 本身只放源码和 `.venv`）。用户给哪个就用哪个。
 - **`--instance-dir`**：ComfyUI 安装目录（`cwf init` 会用；不给也能后续 `cwf init`）。
 - 依赖用 pip 在线安装（`typer` / `rich` / `httpx` / `pydantic` / `playwright`），
   需要目标机器能访问 PyPI。
 - 幂等：重复跑会复用已有的 `.venv` 与配置。
-- 配置结果写在 skill 根的 `skill_env.json`（`.venv` 的 python + 工作区路径）。
+- 配置结果写在 skill 根的 `skill_env.json`（`.venv` 的 python + 用户提供的工作区路径）。
 
 ## 调用约定
 

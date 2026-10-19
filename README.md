@@ -25,12 +25,12 @@ cwf/
 python scripts/setup.py --workspace D:\xxx --instance-dir D:\ComfyUI\ComfyUI
 ```
 
-- `--workspace`：工作区目录。**日志、运行记录、产物、队列、台账全放这里**（skill 本身
-  只放源码和 `.venv`）。
+- `--workspace`（**必填，用户提供**）：工作区目录。**日志、运行记录、产物、队列、台账
+  全放这里**（skill 本身只放源码和 `.venv`）。
 - `--instance-dir`：ComfyUI 安装目录；不给也能后续用 `cwf init` 补。
 - 依赖用 pip 在线安装（typer / rich / httpx / pydantic / playwright），需能访问 PyPI。
 - 幂等：重复跑复用已有 `.venv` 与配置。
-- 完成后生成 `skill_env.json`（命令入口 python + 工作区路径）。
+- 完成后生成 `skill_env.json`（命令入口 python + 用户提供的工作区路径）。
 
 ## 使用
 
