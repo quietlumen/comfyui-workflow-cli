@@ -142,15 +142,44 @@ def configure_browser(workspace: Path) -> None:
     print("      未发现系统 Chrome/Edge；保持 chromium（需 python -m playwright install chromium）")
 
 
+def _resolve_workspace(cli_value: str | None) -> Path:
+    """用户提供 workspace：给了就用；终端下没给就交互询问；非终端（agent 场景）报错。
+
+    agent 场景一律由 agent 先用 ask_user_question 问用户，再把值当 --workspace 传进来；
+    这里只兜底：交互终端可直接输入。
+    """
+    if cli_value:
+        return Path(cli_value).expanduser()
+    try:
+        interactive = sys.stdin.isatty()
+    except Exception:
+        interactive = False
+    if interactive:
+        try:
+            value = input("工作区目录（日志/运行记录/产物/队列/台账放这里，必填）：").strip()
+        except EOFError:
+            raise SystemExit("没给工作区目录，退出。")
+        if not value:
+            raise SystemExit("没给工作区目录，退出。")
+        return Path(value).expanduser()
+    raise SystemExit(
+        "缺少 --workspace（必填，用户提供）。\n"
+        "agent 场景：先用 ask_user_question 向用户要工作区目录，再带上 --workspace 重跑。\n"
+        "例：python setup.py --workspace D:\\xxx --instance-dir D:\\ComfyUI\\ComfyUI"
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="cwf skill 配置（幂等）")
-    ap.add_argument("--workspace", required=True,
+    ap.add_argument("--workspace", default=None,
                     help="工作区目录（必填；产物/运行记录/日志/队列/台账都放这里）")
     ap.add_argument("--instance-dir", default=None, help="ComfyUI 安装目录")
     ap.add_argument("--host", default=None)
     ap.add_argument("--port", type=int, default=None)
     ap.add_argument("--base-python", default=None, help="用来建 .venv 的 python")
     args = ap.parse_args()
+
+    workspace = _resolve_workspace(args.workspace)
 
     base = _base_python(args.base_python)
     if base is None:
@@ -165,13 +194,13 @@ def main() -> None:
 
     print("[3/4] 记录命令入口")
     ENV_FILE.write_text(
-        json.dumps({"python": str(py), "workspace": str(Path(args.workspace).resolve())},
+        json.dumps({"python": str(py), "workspace": str(workspace.resolve())},
                    ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
-    print(f"[4/4] cwf init --workspace {args.workspace}")
-    cwf_init(py, Path(args.workspace), args.instance_dir, args.host, args.port)
+    print(f"[4/4] cwf init --workspace {workspace}")
+    cwf_init(py, workspace, args.instance_dir, args.host, args.port)
 
     print("[5/5] 浏览器配置")
     configure_browser(Path(args.workspace))

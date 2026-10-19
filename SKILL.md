@@ -11,6 +11,23 @@ license: GPL-2.0
 `--json` 输出是唯一事实来源。脚本目录只是薄封装：用 skill 自己的解释器跑内核、统一
 补 `--json`，其余全交给 cwf。
 
+## 安装后的第一步：agent 自己发现需要配置
+
+安装本 skill 后，**agent 首次使用前必须先自查并引导用户配置**，流程固定如下：
+
+1. **自查**：检查 skill 目录里 `skill_env.json` 是否存在、`.venv/Scripts/python.exe` 是否可用。
+   - 两者都在 → 已配置，跳过下面步骤，直接进入"调用约定"。
+   - 缺任一 → **未配置**，禁止直接调任何命令（`cwf_cli.py` 的门禁也会拦）。
+2. **发现需要 setup 后，用 `ask_user_question` 弹窗向用户要两样东西**（不要静默选目录）：
+   - `--workspace`：**必问**——工作区目录（日志/运行记录/产物/队列/台账放这里，用户给哪个用哪个）；
+   - `--instance-dir`：**建议问**——ComfyUI 安装目录（不知道就让用户先 `cwf status` 或提供路径；不给也能后续补）。
+3. **把用户回答拼进 setup 命令再执行**：
+   ```
+   <python> "<skill_dir>/scripts/setup.py" --workspace <用户给的目录> --instance-dir <用户给的 ComfyUI 目录>
+   ```
+   （终端下用户也可以直接跑 setup.py 交互输入；agent 场景一定用 `ask_user_question` 先收集，再把值当参数传。）
+4. setup 完成（生成了 `skill_env.json`）后再进入正常调用。setup 失败就把 stdout/stderr 如实汇报，让用户修。
+
 ## 安装（一次性）
 
 在 skill 目录跑配置脚本——它会在 skill 里建 `.venv`、**在线安装依赖**，并初始化工作区：
